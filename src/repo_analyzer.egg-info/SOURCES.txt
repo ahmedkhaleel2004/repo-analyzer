@@ -1,7 +1,12 @@
 pyproject.toml
 src/repo_analyzer/__init__.py
+src/repo_analyzer/api.py
 src/repo_analyzer/cli.py
 src/repo_analyzer/engine.py
+src/repo_analyzer/exporter.py
+src/repo_analyzer/fetcher.py
+src/repo_analyzer/scorer.py
+src/repo_analyzer/selector.py
 src/repo_analyzer.egg-info/PKG-INFO
 src/repo_analyzer.egg-info/SOURCES.txt
 src/repo_analyzer.egg-info/dependency_links.txt
