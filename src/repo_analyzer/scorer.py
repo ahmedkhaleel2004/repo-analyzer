@@ -1,7 +1,7 @@
 """Repository health score calculator."""
 
-from typing import Dict, Any
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 
 class HealthScorer:
@@ -18,7 +18,7 @@ class HealthScorer:
             "ci_health": 0.10,
         }
 
-    def calculate_score(self, repo_data: Dict[str, Any]) -> int:
+    def calculate_score(self, repo_data: dict[str, Any]) -> int:
         """
         Calculate health score (0-100) based on various metrics.
 
@@ -58,7 +58,7 @@ class HealthScorer:
         # Round to integer 0-100
         return max(0, min(100, round(total_score)))
 
-    def _score_commit_frequency(self, repo: Dict[str, Any]) -> float:
+    def _score_commit_frequency(self, repo: dict[str, Any]) -> float:
         """Score based on commit frequency in the last 90 days."""
         # For now, use pushedAt as a proxy (since getting commit history is expensive)
         pushed_at = repo.get("pushedAt")
@@ -66,7 +66,7 @@ class HealthScorer:
             return 0
 
         pushed_date = datetime.fromisoformat(pushed_at.replace("Z", "+00:00"))
-        days_since_push = (datetime.now(timezone.utc) - pushed_date).days
+        days_since_push = (datetime.now(UTC) - pushed_date).days
 
         # Score based on recency of push
         if days_since_push <= 7:
@@ -82,7 +82,7 @@ class HealthScorer:
         else:
             return 0
 
-    def _score_responsiveness(self, repo: Dict[str, Any]) -> float:
+    def _score_responsiveness(self, repo: dict[str, Any]) -> float:
         """Score based on issue/PR closure rates."""
         # We have total closed issues and PRs from GraphQL
         closed_issues = repo.get("issues", {}).get("totalCount", 0)
@@ -105,7 +105,7 @@ class HealthScorer:
         else:
             return 10  # Give some points for existing
 
-    def _score_release_cadence(self, repo: Dict[str, Any]) -> float:
+    def _score_release_cadence(self, repo: dict[str, Any]) -> float:
         """Score based on days since last release."""
         releases = repo.get("releases", {}).get("nodes", [])
 
@@ -114,7 +114,7 @@ class HealthScorer:
             created_at = repo.get("createdAt")
             if created_at:
                 created_date = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                repo_age_days = (datetime.now(timezone.utc) - created_date).days
+                repo_age_days = (datetime.now(UTC) - created_date).days
 
                 # If repo is less than 30 days old, don't penalize
                 if repo_age_days < 30:
@@ -125,7 +125,7 @@ class HealthScorer:
         release_date = datetime.fromisoformat(
             last_release["createdAt"].replace("Z", "+00:00")
         )
-        days_since_release = (datetime.now(timezone.utc) - release_date).days
+        days_since_release = (datetime.now(UTC) - release_date).days
 
         # Score based on recency
         if days_since_release <= 30:
@@ -139,7 +139,7 @@ class HealthScorer:
         else:
             return 20
 
-    def _score_contributors(self, repo: Dict[str, Any]) -> float:
+    def _score_contributors(self, repo: dict[str, Any]) -> float:
         """Score based on contributor diversity."""
         # Without expensive API calls, use forks as proxy for community
         forks = repo.get("forkCount", 0)
@@ -158,7 +158,7 @@ class HealthScorer:
         else:
             return 10
 
-    def _score_star_growth(self, repo: Dict[str, Any]) -> float:
+    def _score_star_growth(self, repo: dict[str, Any]) -> float:
         """Score based on star growth rate."""
         stars = repo.get("stargazerCount", 0)
         created_at = repo.get("createdAt")
@@ -168,7 +168,7 @@ class HealthScorer:
 
         # Calculate stars per month
         created_date = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-        repo_age_days = max(1, (datetime.now(timezone.utc) - created_date).days)
+        repo_age_days = max(1, (datetime.now(UTC) - created_date).days)
         repo_age_months = max(1, repo_age_days / 30)
 
         stars_per_month = stars / repo_age_months
@@ -193,7 +193,7 @@ class HealthScorer:
         else:
             return 20
 
-    def _score_ci_health(self, repo: Dict[str, Any]) -> float:
+    def _score_ci_health(self, repo: dict[str, Any]) -> float:
         """Score based on CI health (using push recency as proxy)."""
         # Without access to CI data, use recent push as proxy for active development
         pushed_at = repo.get("pushedAt")
@@ -201,7 +201,7 @@ class HealthScorer:
             return 50  # Neutral score if no data
 
         pushed_date = datetime.fromisoformat(pushed_at.replace("Z", "+00:00"))
-        days_since_push = (datetime.now(timezone.utc) - pushed_date).days
+        days_since_push = (datetime.now(UTC) - pushed_date).days
 
         # Recent pushes suggest active CI
         if days_since_push <= 1:

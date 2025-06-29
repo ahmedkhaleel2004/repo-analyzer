@@ -1,9 +1,9 @@
 """Export analysis results to JSON format."""
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Any
-from datetime import datetime, timezone
+from typing import Any
 
 
 class ResultExporter:
@@ -14,7 +14,7 @@ class ResultExporter:
         self.output_dir.mkdir(exist_ok=True)
 
     def export_results(
-        self, org: str, repo_scores: List[Dict[str, Any]], total_repos_found: int
+        self, org: str, repo_scores: list[dict[str, Any]], total_repos_found: int
     ) -> Path:
         """
         Export repository scores to JSON file.
@@ -36,7 +36,7 @@ class ResultExporter:
 
         data = {
             "organization": org,
-            "analyzed_at": datetime.now(timezone.utc).isoformat(),
+            "analyzed_at": datetime.now(UTC).isoformat(),
             "summary": {
                 "total_repos_in_org": total_repos_found,
                 "repos_analyzed": len(sorted_repos),

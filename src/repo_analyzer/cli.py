@@ -1,6 +1,7 @@
 """CLI interface for the repo analyzer."""
 
 import asyncio
+
 import typer
 
 from .engine import analyze_org

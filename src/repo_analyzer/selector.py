@@ -1,14 +1,15 @@
 """Repository selector - filters and ranks repos by importance."""
 
-from typing import List, Dict, Any
+from datetime import UTC
+from typing import Any
 
 
 class RepoSelector:
     """Selects important repositories to analyze."""
 
     def select_important_repos(
-        self, repos: List[Dict[str, Any]], max_repos: int = 30
-    ) -> List[Dict[str, Any]]:
+        self, repos: list[dict[str, Any]], max_repos: int = 30
+    ) -> list[dict[str, Any]]:
         """
         Filter out unimportant repos and return top N by stars/forks.
 
@@ -40,7 +41,7 @@ class RepoSelector:
             filtered_repos.append(repo)
 
         # Calculate importance score for ranking
-        def importance_score(repo: Dict[str, Any]) -> float:
+        def importance_score(repo: dict[str, Any]) -> float:
             stars = repo.get("stargazerCount", 0)
             forks = repo.get("forkCount", 0)
 
@@ -50,10 +51,10 @@ class RepoSelector:
             # Boost score for repos with recent activity
             pushed_at = repo.get("pushedAt")
             if pushed_at:
-                from datetime import datetime, timezone
+                from datetime import datetime
 
                 pushed_date = datetime.fromisoformat(pushed_at.replace("Z", "+00:00"))
-                days_since_push = (datetime.now(timezone.utc) - pushed_date).days
+                days_since_push = (datetime.now(UTC) - pushed_date).days
 
                 # Boost repos pushed in last 30 days
                 if days_since_push < 30:
@@ -62,7 +63,7 @@ class RepoSelector:
                 elif days_since_push > 365:
                     score *= 0.8
 
-            return score
+            return float(score)
 
         # Sort by importance score
         filtered_repos.sort(key=importance_score, reverse=True)

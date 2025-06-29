@@ -1,16 +1,16 @@
 """Main analysis engine that orchestrates the workflow."""
 
-from typing import Dict
-from .fetcher import GitHubFetcher
-from .selector import RepoSelector
-from .scorer import HealthScorer
-from .exporter import ResultExporter
+
 from .cache import Cache
+from .exporter import ResultExporter
+from .fetcher import GitHubFetcher
+from .scorer import HealthScorer
+from .selector import RepoSelector
 
 
 async def analyze_org(
     org: str, use_cache: bool = True, clear_cache: bool = False
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """
     Analyze a GitHub organization and return health scores.
 

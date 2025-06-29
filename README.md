@@ -80,17 +80,20 @@ pip install -e '.[dev]'
 
 # Add your GitHub token (for better rate limits)
 cp .env.example .env
-# Edit .env and add your token
+# Edit .env and add your token - it loads automatically!
 ```
 
 ### Run It
 
 ```bash
-# Analyze an organization
+# Analyze an organization (no need to export variables!)
 repo-analyzer vercel
 
 # Skip cache for fresh data
 repo-analyzer vercel --no-cache
+
+# Clear cache before running
+repo-analyzer vercel --clear-cache
 
 # Results saved to: results/vercel.json
 ```
@@ -131,6 +134,7 @@ GET https://repo-analyzer-production-247d.up.railway.app/results/{org}
 - **Without token**: 60 requests/hour
 - **Cache**: Results cached for 1 hour (use `--no-cache` to skip)
 - **API usage**: Shows rate limit info after each run
+- **Token support**: Uses `GITHUB_TOKEN` or `GITHUB_PAT` environment variables
 
 Example output:
 
@@ -183,12 +187,26 @@ docker run -e GITHUB_PAT=your_token -p 8000:8000 repo-analyzer
 ## Development
 
 ```bash
-# Run tests & linting
+# Run full CI pipeline (tests, linting, type checking)
 make ci
 
 # Start API locally
 uvicorn repo_analyzer.api:app --reload
+
+# Run specific tools
+ruff check src/               # Linting
+mypy src/                     # Type checking
+pytest tests/ -v              # Run tests
 ```
+
+### Project Structure
+
+- **Modern Python packaging** with `pyproject.toml` (PEP 621)
+- **Comprehensive test suite** with async support
+- **Type hints** throughout the codebase
+- **Auto code formatting** with Ruff
+- **SQLite caching** with TTL support
+- **GraphQL optimization** for minimal API calls
 
 ## Questions?
 

@@ -1,13 +1,14 @@
 """GitHub API fetcher with rate limiting and GraphQL support."""
 
-import httpx
-from typing import Any, Dict, List, Optional
-import os
-from datetime import datetime, timezone
 import asyncio
-from .cache import Cache
+import os
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
+import httpx
+
+from .cache import Cache
 
 # Try to load .env file if it exists
 env_file = Path(".env")
@@ -37,7 +38,7 @@ class GitHubFetcher:
         self.graphql_url = "https://api.github.com/graphql"
         self.rest_url = "https://api.github.com"
         self.cache = Cache() if use_cache else None
-        self.rate_limit_info: Dict[str, int] = {}
+        self.rate_limit_info: dict[str, int] = {}
 
     def _update_rate_limit_info(self, headers: dict) -> None:
         """Extract and store rate limit information from response headers."""
@@ -72,15 +73,13 @@ class GitHubFetcher:
                 "reset": int(headers.get(reset_key, 0)),
             }
 
-    def get_rate_limit_status(self) -> Optional[str]:
+    def get_rate_limit_status(self) -> str | None:
         """Get formatted rate limit status."""
         if not self.rate_limit_info:
             return None
 
-        reset_time = datetime.fromtimestamp(
-            self.rate_limit_info["reset"], tz=timezone.utc
-        )
-        now = datetime.now(timezone.utc)
+        reset_time = datetime.fromtimestamp(self.rate_limit_info["reset"], tz=UTC)
+        now = datetime.now(UTC)
         time_until_reset = reset_time - now
 
         # Format time until reset
@@ -96,14 +95,14 @@ class GitHubFetcher:
             f"resets in {time_str}"
         )
 
-    async def fetch_org_repos(self, org: str) -> List[Dict[str, Any]]:
+    async def fetch_org_repos(self, org: str) -> list[dict[str, Any]]:
         """Fetch all repositories for an organization using GraphQL."""
         # Check cache first
         if self.cache:
             cached_data = await self.cache.get("org_repos", org)
             if cached_data:
                 print(f"📦 Using cached data for {org} (expires in 1 hour)")
-                return cached_data
+                return list(cached_data)
 
         query = """
         query($org: String!, $cursor: String) {
@@ -123,7 +122,7 @@ class GitHubFetcher:
                         createdAt
                         updatedAt
                         pushedAt
-                        
+
                         # For commit frequency
                         defaultBranchRef {
                             target {
@@ -134,7 +133,7 @@ class GitHubFetcher:
                                 }
                             }
                         }
-                        
+
                         # For issues/PR metrics
                         issues(states: CLOSED, first: 1) {
                             totalCount
@@ -142,19 +141,19 @@ class GitHubFetcher:
                         pullRequests(states: CLOSED, first: 1) {
                             totalCount
                         }
-                        
+
                         # For release info
                         releases(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {
                             nodes {
                                 createdAt
                             }
                         }
-                        
+
                         # For language info
                         primaryLanguage {
                             name
                         }
-                        
+
                         # For topics
                         repositoryTopics(first: 10) {
                             nodes {
@@ -231,17 +230,17 @@ class GitHubFetcher:
                     if e.response.status_code == 401:
                         raise Exception(
                             "Invalid GitHub token. Please check your GITHUB_TOKEN."
-                        )
+                        ) from None
                     elif e.response.status_code == 404:
-                        raise Exception(f"Organization '{org}' not found")
+                        raise Exception(f"Organization '{org}' not found") from None
                     else:
                         if e.response.status_code == 502:
                             raise Exception(
                                 "GitHub servers are temporarily unavailable (502). Try again in a few moments or try a smaller organization."
-                            )
+                            ) from None
                         raise Exception(
                             f"GitHub API error: {e.response.status_code} - {e.response.text}"
-                        )
+                        ) from None
 
         print(
             f"Fetched {len(all_repos)} repositories from {org} (used {api_calls} API calls)"
@@ -253,7 +252,7 @@ class GitHubFetcher:
 
         return all_repos
 
-    async def fetch_additional_metrics(self, repo_name: str) -> Dict[str, Any]:
+    async def fetch_additional_metrics(self, repo_name: str) -> dict[str, Any]:
         """Fetch additional metrics that aren't available in GraphQL."""
         # This could fetch commit activity, contributor stats, etc.
         # For now, returning empty dict as these would require many REST calls

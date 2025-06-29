@@ -1,9 +1,10 @@
 """SQLite cache for GitHub API responses."""
 
-import aiosqlite
 import json
-from typing import Optional, Any
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+import aiosqlite
 
 
 class Cache:
@@ -32,7 +33,7 @@ class Cache:
         """Create a cache key from prefix and identifier."""
         return f"{prefix}:{identifier}"
 
-    async def get(self, prefix: str, identifier: str) -> Optional[Any]:
+    async def get(self, prefix: str, identifier: str) -> Any | None:
         """Get value from cache if not expired."""
         await self._init_db()
         key = self._make_key(prefix, identifier)
@@ -50,7 +51,7 @@ class Cache:
             expires_at = datetime.fromisoformat(expires_at_str)
 
             # Check if expired
-            if datetime.now(timezone.utc) > expires_at:
+            if datetime.now(UTC) > expires_at:
                 # Clean up expired entry
                 await db.execute("DELETE FROM cache WHERE key = ?", (key,))
                 await db.commit()
@@ -63,7 +64,7 @@ class Cache:
         await self._init_db()
         key = self._make_key(prefix, identifier)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = now + self.ttl
 
         async with aiosqlite.connect(self.db_path) as db:
@@ -83,7 +84,7 @@ class Cache:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 "DELETE FROM cache WHERE expires_at < ?",
-                (datetime.now(timezone.utc).isoformat(),),
+                (datetime.now(UTC).isoformat(),),
             )
             await db.commit()
 

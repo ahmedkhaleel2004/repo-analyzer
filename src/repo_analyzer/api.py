@@ -1,13 +1,13 @@
 """FastAPI web service for repo analysis."""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from typing import Dict
-from .engine import analyze_org
 import os
 from pathlib import Path
 
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+
+from .engine import analyze_org
 
 app = FastAPI(
     title="GitHub Repo Analyzer",
@@ -18,7 +18,7 @@ app = FastAPI(
 
 class AnalysisResponse(BaseModel):
     organization: str
-    repository_scores: Dict[str, int]
+    repository_scores: dict[str, int]
     total_repos_analyzed: int
     average_score: float
     results_file: str
@@ -83,13 +83,15 @@ async def analyze_organization(org: str):
 
         # Return appropriate HTTP error
         if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e)) from None
         elif "token" in str(e).lower():
-            raise HTTPException(status_code=401, detail=str(e))
+            raise HTTPException(status_code=401, detail=str(e)) from None
         elif "rate limit" in str(e).lower():
-            raise HTTPException(status_code=429, detail=str(e))
+            raise HTTPException(status_code=429, detail=str(e)) from None
         else:
-            raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Analysis failed: {str(e)}"
+            ) from None
 
 
 @app.get("/results/{org}")

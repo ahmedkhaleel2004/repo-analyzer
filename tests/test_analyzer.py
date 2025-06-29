@@ -2,17 +2,18 @@
 
 import os
 import tempfile
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
 
-from repo_analyzer.scorer import HealthScorer
-from repo_analyzer.selector import RepoSelector
+import pytest
+
 from repo_analyzer.cache import Cache
-from repo_analyzer.fetcher import GitHubFetcher
 from repo_analyzer.engine import analyze_org
 from repo_analyzer.exporter import ResultExporter
+from repo_analyzer.fetcher import GitHubFetcher
+from repo_analyzer.scorer import HealthScorer
+from repo_analyzer.selector import RepoSelector
 
 
 class TestHealthScorer:
@@ -27,12 +28,12 @@ class TestHealthScorer:
             "name": "perfect-repo",
             "stargazerCount": 10000,
             "forkCount": 500,
-            "pushedAt": datetime.now(timezone.utc).isoformat(),
-            "createdAt": (datetime.now(timezone.utc) - timedelta(days=365)).isoformat(),
+            "pushedAt": datetime.now(UTC).isoformat(),
+            "createdAt": (datetime.now(UTC) - timedelta(days=365)).isoformat(),
             "issues": {"totalCount": 1000},
             "pullRequests": {"totalCount": 500},
             "releases": {
-                "nodes": [{"createdAt": datetime.now(timezone.utc).isoformat()}]
+                "nodes": [{"createdAt": datetime.now(UTC).isoformat()}]
             },
         }
 
@@ -48,9 +49,9 @@ class TestHealthScorer:
             "name": "abandoned-repo",
             "stargazerCount": 100,
             "forkCount": 5,
-            "pushedAt": (datetime.now(timezone.utc) - timedelta(days=730)).isoformat(),
+            "pushedAt": (datetime.now(UTC) - timedelta(days=730)).isoformat(),
             "createdAt": (
-                datetime.now(timezone.utc) - timedelta(days=1000)
+                datetime.now(UTC) - timedelta(days=1000)
             ).isoformat(),
             "issues": {"totalCount": 10},
             "pullRequests": {"totalCount": 2},
@@ -220,6 +221,7 @@ class TestGitHubFetcher:
 
             # Re-import to trigger .env loading
             import importlib
+
             import repo_analyzer.fetcher
 
             importlib.reload(repo_analyzer.fetcher)
@@ -255,7 +257,7 @@ class TestGitHubFetcher:
             "remaining": 4936,
             "used": 64,
             "reset": int(
-                (datetime.now(timezone.utc) + timedelta(minutes=32)).timestamp()
+                (datetime.now(UTC) + timedelta(minutes=32)).timestamp()
             ),
         }
 
@@ -300,7 +302,7 @@ class TestResultExporter:
                     "health_score": 95,
                     "stargazerCount": 100,
                     "forkCount": 10,
-                    "pushedAt": datetime.now(timezone.utc).isoformat(),
+                    "pushedAt": datetime.now(UTC).isoformat(),
                 }
             ]
 
@@ -338,9 +340,9 @@ class TestEngine:
                 "isArchived": False,
                 "isFork": False,
                 "isEmpty": False,
-                "pushedAt": datetime.now(timezone.utc).isoformat(),
+                "pushedAt": datetime.now(UTC).isoformat(),
                 "createdAt": (
-                    datetime.now(timezone.utc) - timedelta(days=365)
+                    datetime.now(UTC) - timedelta(days=365)
                 ).isoformat(),
                 "issues": {"totalCount": 10},
                 "pullRequests": {"totalCount": 5},
