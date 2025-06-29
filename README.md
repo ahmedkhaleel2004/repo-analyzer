@@ -2,6 +2,28 @@
 
 Analyzes GitHub organizations and scores repository health (0-100). Higher scores = better maintained repos.
 
+## How We Select Repositories
+
+The smart selection algorithm focuses on what matters:
+
+1. **Filters out**: Forks, archived repos, empty repos, and private repos
+2. **Ranks by importance**: `stars × 1.0 + forks × 0.5`
+3. **Boosts recent activity**: ×1.2 multiplier if pushed in last 30 days
+4. **Selects top repos**: Up to 30 repos that represent 80% of organization's total stars
+
+This ensures we analyze the most important repositories while saving time and API calls.
+
+## Health Score Calculation
+
+| Metric            | Weight | How It's Measured               |
+| ----------------- | ------ | ------------------------------- |
+| Recent Activity   | 30%    | Days since last push            |
+| Issue/PR Activity | 25%    | Total closed issues and PRs     |
+| Recent Releases   | 15%    | Days since last release         |
+| Community         | 10%    | Fork count (contributor proxy)  |
+| Popularity Growth | 10%    | Stars per month since creation  |
+| CI Activity       | 10%    | Recent pushes (CI health proxy) |
+
 ## 🚀 Try It Now (No Installation!)
 
 ```bash
@@ -42,29 +64,11 @@ This tool helps you quickly assess which repositories in a GitHub organization a
 
 ### Strategic Design Decisions
 
-1. **Repository Selection Algorithm**
-
-   - Filters out forks, archived, and empty repos (not worth analyzing)
-   - Ranks by `stars × 1.0 + forks × 0.5` with recency boost
-   - Selects top 30 or repos representing 80% of total stars
-   - _Why?_ Most orgs have many low-value repos; we focus on what matters
-
-2. **Rate Limit Strategy**
+1. **Rate Limit Strategy**
    - GraphQL batching: 50 repos per request
    - SQLite caching: Avoid repeated API calls
    - Rate limit tracking: Display usage after each run
    - _Result:_ Can analyze 1000+ orgs per hour with one token
-
-## Health Score Breakdown
-
-| What We Check     | Weight | Why It Matters                     |
-| ----------------- | ------ | ---------------------------------- |
-| Recent Activity   | 30%    | Active repos get pushed frequently |
-| Issue/PR Activity | 25%    | Good projects close issues/PRs     |
-| Recent Releases   | 15%    | Healthy repos ship updates         |
-| Community         | 10%    | More forks = more contributors     |
-| Popularity Growth | 10%    | Growing stars = growing interest   |
-| CI Activity       | 10%    | Active CI = quality focus          |
 
 ## Installation (Optional)
 
@@ -148,7 +152,6 @@ Successfully tested with:
 
 - ✅ **SocketDev** (required): 43 repos → 21 analyzed in 5 seconds
 - ✅ **Vercel**: 176 repos → 12 analyzed in 8 seconds
-- ✅ **Microsoft**: 3000+ repos → 30 analyzed in 45 seconds
 
 ## Popular Organizations to Try
 
