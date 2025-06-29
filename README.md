@@ -8,13 +8,11 @@ Try it now without installation:
 
 ```bash
 # Analyze any GitHub organization
-curl https://your-app-production.up.railway.app/analyze/vercel
+curl https://repo-analyzer-production-247d.up.railway.app/analyze/vercel
 
 # View API documentation
-https://your-app-production.up.railway.app/docs
+https://repo-analyzer-production-247d.up.railway.app/docs
 ```
-
-> Note: Replace `your-app-production` with your actual Railway subdomain
 
 ## Features
 
