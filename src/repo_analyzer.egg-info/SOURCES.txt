@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 src/repo_analyzer/__init__.py
 src/repo_analyzer/api.py
@@ -13,4 +14,4 @@ src/repo_analyzer.egg-info/dependency_links.txt
 src/repo_analyzer.egg-info/entry_points.txt
 src/repo_analyzer.egg-info/requires.txt
 src/repo_analyzer.egg-info/top_level.txt
-tests/test_dummy.py
+tests/test_analyzer.py
