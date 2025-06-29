@@ -1,9 +1,9 @@
 """GitHub API fetcher with rate limiting and GraphQL support."""
 
 import httpx
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 from .cache import Cache
 
@@ -25,6 +25,64 @@ class GitHubFetcher:
         self.graphql_url = "https://api.github.com/graphql"
         self.rest_url = "https://api.github.com"
         self.cache = Cache() if use_cache else None
+        self.rate_limit_info: Dict[str, int] = {}
+
+    def _update_rate_limit_info(self, headers: dict) -> None:
+        """Extract and store rate limit information from response headers."""
+        # Try both REST and GraphQL rate limit headers
+        if "x-ratelimit-limit" in headers or "X-RateLimit-Limit" in headers:
+            # Headers might be lowercase
+            limit_key = (
+                "x-ratelimit-limit"
+                if "x-ratelimit-limit" in headers
+                else "X-RateLimit-Limit"
+            )
+            remaining_key = (
+                "x-ratelimit-remaining"
+                if "x-ratelimit-remaining" in headers
+                else "X-RateLimit-Remaining"
+            )
+            used_key = (
+                "x-ratelimit-used"
+                if "x-ratelimit-used" in headers
+                else "X-RateLimit-Used"
+            )
+            reset_key = (
+                "x-ratelimit-reset"
+                if "x-ratelimit-reset" in headers
+                else "X-RateLimit-Reset"
+            )
+
+            self.rate_limit_info = {
+                "limit": int(headers.get(limit_key, 0)),
+                "remaining": int(headers.get(remaining_key, 0)),
+                "used": int(headers.get(used_key, 0)),
+                "reset": int(headers.get(reset_key, 0)),
+            }
+
+    def get_rate_limit_status(self) -> Optional[str]:
+        """Get formatted rate limit status."""
+        if not self.rate_limit_info:
+            return None
+
+        reset_time = datetime.fromtimestamp(
+            self.rate_limit_info["reset"], tz=timezone.utc
+        )
+        now = datetime.now(timezone.utc)
+        time_until_reset = reset_time - now
+
+        # Format time until reset
+        minutes = int(time_until_reset.total_seconds() / 60)
+        hours = minutes // 60
+        minutes = minutes % 60
+
+        time_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+        return (
+            f"📊 API Rate Limit: {self.rate_limit_info['used']} used, "
+            f"{self.rate_limit_info['remaining']}/{self.rate_limit_info['limit']} remaining, "
+            f"resets in {time_str}"
+        )
 
     async def fetch_org_repos(self, org: str) -> List[Dict[str, Any]]:
         """Fetch all repositories for an organization using GraphQL."""
@@ -106,6 +164,7 @@ class GitHubFetcher:
 
         all_repos = []
         cursor = None
+        api_calls = 0
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             while True:
@@ -118,6 +177,10 @@ class GitHubFetcher:
                         headers=self.headers,
                     )
                     response.raise_for_status()
+                    api_calls += 1
+
+                    # Update rate limit info
+                    self._update_rate_limit_info(dict(response.headers))
 
                     # Check rate limits
                     if "X-RateLimit-Remaining" in response.headers:
@@ -164,7 +227,9 @@ class GitHubFetcher:
                             f"GitHub API error: {e.response.status_code} - {e.response.text}"
                         )
 
-        print(f"Fetched {len(all_repos)} repositories from {org}")
+        print(
+            f"Fetched {len(all_repos)} repositories from {org} (used {api_calls} API calls)"
+        )
 
         # Cache the results
         if self.cache:

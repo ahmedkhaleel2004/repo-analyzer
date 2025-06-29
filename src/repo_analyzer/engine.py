@@ -34,7 +34,7 @@ async def analyze_org(
     if clear_cache and use_cache:
         cache = Cache()
         await cache.clear_all()
-        print("��️  Cache cleared")
+        print("🗑️  Cache cleared")
 
     # Initialize components
     fetcher = GitHubFetcher(use_cache=use_cache)
@@ -47,6 +47,11 @@ async def analyze_org(
         print("📥 Fetching repositories from GitHub...")
         repos = await fetcher.fetch_org_repos(org)
         total_repos = len(repos)
+
+        # Display rate limit info if available
+        rate_limit_status = fetcher.get_rate_limit_status()
+        if rate_limit_status:
+            print(rate_limit_status)
 
         if not repos:
             print(f"❌ No repositories found for organization '{org}'")
