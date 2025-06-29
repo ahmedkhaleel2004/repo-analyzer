@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repo-analyzer"
+version = "0.1.0"
+description = "CLI + API to score GitHub repos"
+requires-python = ">=3.12"
+dependencies = [
+  "httpx[http2]",
+  "typer[all]",
+  "aiosqlite",
+  "fastapi",
+  "uvicorn[standard]",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy", "pytest-vcr"]
+
+[project.scripts]
+repo-analyzer = "repo_analyzer.cli:app"

@@ -1,0 +1,2 @@
+[console_scripts]
+repo-analyzer = repo_analyzer.cli:app
