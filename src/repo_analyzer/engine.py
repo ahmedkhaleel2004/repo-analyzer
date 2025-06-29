@@ -5,9 +5,12 @@ from .fetcher import GitHubFetcher
 from .selector import RepoSelector
 from .scorer import HealthScorer
 from .exporter import ResultExporter
+from .cache import Cache
 
 
-async def analyze_org(org: str) -> Dict[str, int]:
+async def analyze_org(
+    org: str, use_cache: bool = True, clear_cache: bool = False
+) -> Dict[str, int]:
     """
     Analyze a GitHub organization and return health scores.
 
@@ -17,13 +20,24 @@ async def analyze_org(org: str) -> Dict[str, int]:
     3. Calculate health scores
     4. Export results
 
+    Args:
+        org: GitHub organization name
+        use_cache: Whether to use cached data (default: True)
+        clear_cache: Clear cache before running (default: False)
+
     Returns:
         Dict mapping repo names to their health scores
     """
     print(f"\n🔍 Analyzing {org}...")
 
+    # Clear cache if requested
+    if clear_cache and use_cache:
+        cache = Cache()
+        await cache.clear_all()
+        print("��️  Cache cleared")
+
     # Initialize components
-    fetcher = GitHubFetcher()
+    fetcher = GitHubFetcher(use_cache=use_cache)
     selector = RepoSelector()
     scorer = HealthScorer()
     exporter = ResultExporter()

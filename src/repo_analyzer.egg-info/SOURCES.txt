@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 src/repo_analyzer/__init__.py
 src/repo_analyzer/api.py
+src/repo_analyzer/cache.py
 src/repo_analyzer/cli.py
 src/repo_analyzer/engine.py
 src/repo_analyzer/exporter.py

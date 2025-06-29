@@ -5,12 +5,13 @@ from typing import Any, Dict, List
 import os
 from datetime import datetime
 import asyncio
+from .cache import Cache
 
 
 class GitHubFetcher:
     """Handles GitHub API calls with rate limiting."""
 
-    def __init__(self, token: str | None = None):
+    def __init__(self, token: str | None = None, use_cache: bool = True):
         self.token = token or os.getenv("GITHUB_TOKEN") or os.getenv("GITHUB_PAT")
         if not self.token:
             print(
@@ -23,9 +24,17 @@ class GitHubFetcher:
         }
         self.graphql_url = "https://api.github.com/graphql"
         self.rest_url = "https://api.github.com"
+        self.cache = Cache() if use_cache else None
 
     async def fetch_org_repos(self, org: str) -> List[Dict[str, Any]]:
         """Fetch all repositories for an organization using GraphQL."""
+        # Check cache first
+        if self.cache:
+            cached_data = await self.cache.get("org_repos", org)
+            if cached_data:
+                print(f"📦 Using cached data for {org} (expires in 1 hour)")
+                return cached_data
+
         query = """
         query($org: String!, $cursor: String) {
             organization(login: $org) {
@@ -156,6 +165,11 @@ class GitHubFetcher:
                         )
 
         print(f"Fetched {len(all_repos)} repositories from {org}")
+
+        # Cache the results
+        if self.cache:
+            await self.cache.set("org_repos", org, all_repos)
+
         return all_repos
 
     async def fetch_additional_metrics(self, repo_name: str) -> Dict[str, Any]:
