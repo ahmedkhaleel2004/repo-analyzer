@@ -6,6 +6,18 @@ import os
 from datetime import datetime, timezone
 import asyncio
 from .cache import Cache
+from pathlib import Path
+
+
+# Try to load .env file if it exists
+env_file = Path(".env")
+if env_file.exists():
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ[key] = value.strip()
 
 
 class GitHubFetcher:
@@ -223,6 +235,10 @@ class GitHubFetcher:
                     elif e.response.status_code == 404:
                         raise Exception(f"Organization '{org}' not found")
                     else:
+                        if e.response.status_code == 502:
+                            raise Exception(
+                                "GitHub servers are temporarily unavailable (502). Try again in a few moments or try a smaller organization."
+                            )
                         raise Exception(
                             f"GitHub API error: {e.response.status_code} - {e.response.text}"
                         )
